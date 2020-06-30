@@ -44,16 +44,16 @@
               shell:
                   cmd: </etc/wireguard/priv.key wg pubkey >/etc/wireguard/pub.key
                   creates: /etc/wireguard/pub.key
-            - name: Create wireguard shared key
-              shell:
-                  cmd: umask 0077 && wg genpsk >/etc/wireguard/shared.key
-                  creates: /etc/wireguard/shared.key
             - name: Register private key
               command: cat /etc/wireguard/priv.key
               register: server_private_key
             - name: Register public key
               command: cat /etc/wireguard/pub.key
               register: server_public_key
+            - name: Create wireguard shared key
+              shell:
+                  cmd: umask 0077 && wg genpsk >/etc/wireguard/shared.key
+                  creates: /etc/wireguard/shared.key
             - name: Register shared key
               command: cat /etc/wireguard/shared.key
               register: shared_key
@@ -63,7 +63,7 @@
         block:
             - name: Create wireguard config path
               file:
-                  path: /etc/wireguard
+                  path: wireguard
                   state: directory
                   mode: 0700
             - name: Create wireguard private key
@@ -74,10 +74,6 @@
               shell:
                   cmd: <wireguard/priv.key wg pubkey >wireguard/pub.key
                   creates: wireguard/pub.key
-            - name: Create wireguard shared key
-              shell:
-                  cmd: umask 0077 && wg genpsk >wireguard/shared.key
-                  creates: wireguard/shared.key
             - name: Register private key
               command: cat wireguard/priv.key
               register: client_private_key
@@ -101,8 +97,9 @@
                   src: wg-server.conf
                   dest: /etc/wireguard/wg0.conf
                   mode: 0600
+              register: server_config
       - name: Start wireguard
         service:
             name: wg-quick@wg0
-            state: started
+            state: '{{ "restarted" if server_config.changed else "started" }}'
             enabled: true
