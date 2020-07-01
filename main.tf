@@ -32,6 +32,9 @@ resource "google_compute_firewall" "firewall" {
     protocol = "udp"
     ports    = ["443"]
   }
+  allow {
+    protocol = "icmp"
+  }
 }
 
 resource "google_compute_address" "address" {

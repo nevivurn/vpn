@@ -10,6 +10,11 @@
                   that:
                       - ansible_distribution == 'Debian'
                       - ansible_architecture == 'x86_64'
+
+            # If secure boot is enabled, we can't install kernel modules through
+            # DKMS easily. Fortunately, linux-image >= 5.5 (on buster-backports)
+            # inclues the wireguard module, so install that image and the
+            # wireguard userspace tools.
             - name: Install kernel from backports
               apt:
                   name: linux-image-amd64
@@ -22,6 +27,8 @@
                   path: /etc/sysctl.conf
                   line: 'net.ipv4.ip_forward=1'
                   regexp: '#net\.ipv4\.ip_forward=1'
+
+            # Since we may have installed a new kernel, reboot if required
             - name: Check for reboot-required
               stat:
                   path: /run/reboot-required
@@ -29,6 +36,7 @@
             - name: Reboot if required
               reboot:
               when: reboot_required.stat.exists
+
       - name: Server keys
         block:
             - name: Create wireguard config path
@@ -57,6 +65,7 @@
             - name: Register shared key
               command: cat /etc/wireguard/shared.key
               register: shared_key
+
       - name: Client keys
         delegate_to: localhost
         become: false
@@ -80,6 +89,7 @@
             - name: Register public key
               command: cat wireguard/pub.key
               register: client_public_key
+
       - name: Wireguard configuration
         vars:
             server_endpoint: 10.1.0.1
@@ -98,6 +108,7 @@
                   dest: /etc/wireguard/wg0.conf
                   mode: 0600
               register: server_config
+
       - name: Start wireguard
         service:
             name: wg-quick@wg0
