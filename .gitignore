@@ -36,6 +36,7 @@ override.tf.json
 
 # End of https://www.toptal.com/developers/gitignore/api/ansible,terraform
 
-inventory.txt
+terraform.tfvars
 service-account.json
-/wireguard/
+inventory.ini
+wireguard/
