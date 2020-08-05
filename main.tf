@@ -1,22 +1,11 @@
-provider "google" {
-  version = "~> 3.28"
-
-  credentials = var.credentials
-  project     = var.project
-  region      = var.region
-  zone        = var.zone
-}
-
+# network
 resource "google_compute_network" "network" {
-  name = "${var.name}-network"
-
+  name                    = "${var.name}-network"
   auto_create_subnetworks = false
 }
-
 resource "google_compute_subnetwork" "subnet" {
-  name    = "${var.name}-${var.region}-subnet"
-  network = google_compute_network.network.self_link
-
+  name          = "${var.name}-${var.region}-subnet"
+  network       = google_compute_network.network.self_link
   ip_cidr_range = var.cidr
 }
 
@@ -33,16 +22,15 @@ resource "google_compute_firewall" "firewall" {
     ports    = ["443"]
   }
 }
-
 resource "google_compute_address" "address" {
   name = "${var.name}-address"
 }
 
+# instance
 data "google_compute_image" "image" {
   family  = "debian-10"
   project = "debian-cloud"
 }
-
 resource "google_compute_instance" "instance" {
   name         = var.name
   zone         = var.zone
@@ -75,6 +63,8 @@ resource "google_compute_instance" "instance" {
   }
 }
 
-output "address" {
-  value = google_compute_address.address.address
+resource "local_file" "inventory" {
+  filename        = "${path.root}/inventory.ini"
+  content         = "${google_compute_address.address.address}\n"
+  file_permission = "0644"
 }
