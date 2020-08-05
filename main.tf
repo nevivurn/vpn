@@ -50,7 +50,8 @@ resource "google_compute_instance" "instance" {
     network    = google_compute_network.network.self_link
     subnetwork = google_compute_subnetwork.subnet.self_link
     access_config {
-      nat_ip = google_compute_address.address.address
+      nat_ip                 = google_compute_address.address.address
+      public_ptr_domain_name = var.hostname
     }
   }
 
